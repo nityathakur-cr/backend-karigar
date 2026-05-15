@@ -101,7 +101,7 @@ const blockUser = async (req, res) => {
     const { is_blocked } = req.body;
 
     if (typeof is_blocked !== "boolean") {
-      return res.status(400).json({ message: "is_blocked must be a boolean" });
+      return res.status(400).json({ message: "Bad request" });
     }
 
     const user = await User.findByIdAndUpdate(
@@ -132,7 +132,7 @@ const blockUser = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const { role, is_blocked, page = 1, limit = 20 } = req.query;
+    const { role, is_blocked, search, page = 1, limit = 20 } = req.query;
 
     const filter = {};
     if (role && ["user", "businessOwner"].includes(role)) {
@@ -176,7 +176,7 @@ const changeUserRole = async (req, res) => {
     const { userId } = req.params;
     const { role } = req.body;
 
-    if (!["user", "owner"].includes(role)) {
+    if (!["user", "businessOwner"].includes(role)) {
       return res.status(400).json({ message: "Role must be user or owner" });
     }
 
