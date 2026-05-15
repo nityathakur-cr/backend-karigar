@@ -17,14 +17,16 @@ const UserSchema = new mongoose.Schema(
       type: String,
       lowercase: true,
       unique: true,
+      sparse: true,
       trim: true,
-      default: "",
+      default: null,
     },
     phone: {
       type: String,
       trim: true,
       unique: true,
-      default: "",
+      sparse: true,
+      default: null,
     },
     profile_image: {
       type: String,

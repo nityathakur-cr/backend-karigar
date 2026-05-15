@@ -4,17 +4,23 @@ const { auth } = require("../../config/firebase");
 const loginUser = async (req, res) => {
   try {
     const { uid, email, name, picture, phone_number } = req.user;
+    const { role } = req.body;
 
     let user = await User.findOne({ firebase_uid: uid });
 
     if (!user) {
-      newUser = await User.create({
+      let assignedRole = "user";
+      if (role && ["user", "businessOwner"].includes(role)) {
+        assignedRole = role;
+      }
+
+      const newUser = await User.create({
         firebase_uid: uid,
         name: name || "",
-        email: email || "",
-        phone: phone_number || "",
+        email: email || null,
+        phone: phone_number || null,
         profile_image: picture || "",
-        role: "user",
+        role: assignedRole,
         is_blocked: false,
       });
       return res.status(201).json({

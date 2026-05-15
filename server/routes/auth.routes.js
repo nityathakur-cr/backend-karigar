@@ -15,13 +15,13 @@ const {
 } = require("../api/auth/auth.controller");
 
 router.post("/login", verifyToken, loginUser);
-router.get("/me", verifyToken, getMe);
-router.put("/profile", verifyToken, updateProfile);
+router.post("/me", verifyToken, getMe);
+router.post("/profile", verifyToken, updateProfile);
 
 // admin only routes
-router.get("/users", verifyToken, checkUser, isAdmin, getAllUsers);
-router.put("/users/:userId/block", verifyToken, checkUser, isAdmin, blockUser);
-router.put(
+router.post("/users", verifyToken, checkUser, isAdmin, getAllUsers);
+router.post("/users/:userId/block", verifyToken, checkUser, isAdmin, blockUser);
+router.post(
   "/users/:userId/role",
   verifyToken,
   checkUser,
