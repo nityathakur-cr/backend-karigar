@@ -10,7 +10,9 @@ const verificationSchema = new mongoose.Schema(
     manager_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required() {
+        return this.action !== "pending";
+      },
     },
     action: {
       type: String,

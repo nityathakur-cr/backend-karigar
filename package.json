@@ -16,7 +16,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon server.js",
-    "admin:seed": "node server/seed/adminSeed.js"
+    "seed:admin": "node server/seed/adminSeed.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

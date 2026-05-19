@@ -6,6 +6,7 @@ const User = require("../api/user/userModel");
 const seedAdmin = async () => {
   const adminEmail = "admin@karigar.com";
   const adminPassword = "admin123";
+  const adminPhone = "+91 8845693251";
 
   try {
     await connectDB();
@@ -17,11 +18,12 @@ const seedAdmin = async () => {
       firebaseUid = userRecord.uid;
       console.log("Admin already exists in Firebase with UID:", firebaseUid);
     } catch (error) {
-      if (error.code === 'auth/user-not-found') {
+      if (error.code === "auth/user-not-found") {
         console.log("Admin not found in Firebase. Creating...");
         const newRecord = await auth.createUser({
           email: adminEmail,
           password: adminPassword,
+          phone: adminPhone,
           displayName: "Admin",
         });
         firebaseUid = newRecord.uid;
@@ -44,7 +46,9 @@ const seedAdmin = async () => {
       await User.create({
         firebase_uid: firebaseUid,
         email: adminEmail,
+        phone: adminPhone,
         name: "Admin",
+        profile_image: "https://ui-avatars.com/api/?name=Admin",
         role: "admin",
       });
       console.log("Admin successfully created in MongoDB.");

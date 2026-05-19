@@ -9,7 +9,6 @@ const UserSchema = new mongoose.Schema(
     },
     name: {
       type: String,
-      lowercase: true,
       trim: true,
       default: "",
     },
@@ -19,14 +18,12 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
       trim: true,
-      default: null,
     },
     phone: {
       type: String,
       trim: true,
       unique: true,
       sparse: true,
-      default: null,
     },
     profile_image: {
       type: String,
@@ -35,7 +32,7 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "businessOwner", "admin"],
+      enum: ["user", "businessOwner", "manager", "admin"],
       default: "user",
       required: true,
     },

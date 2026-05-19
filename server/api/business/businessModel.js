@@ -35,7 +35,7 @@ const businessSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: true,
-      unique: true,
+      // unique: true,
     },
     whatsapp: {
       type: String,
@@ -68,20 +68,18 @@ const businessSchema = new mongoose.Schema(
     timing: [
       {
         day: String,
-        open: Date,
-        close: Date,
+        open: String,
+        close: String,
       },
     ],
     services: [{ type: String }],
     logo: {
       type: String,
     },
-    image: {
-      type: String,
-      required: true,
-    },
+    images: [{ type: String }],
     rating: {
       type: Number,
+      default: 0,
     },
     reviews: [
       {
@@ -91,6 +89,7 @@ const businessSchema = new mongoose.Schema(
     ],
     total_reviews: {
       type: Number,
+      default: 0,
     },
     verified_status: {
       type: String,
@@ -129,6 +128,17 @@ const businessSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+businessSchema.index({
+  name: "text",
+  description: "text",
+  services: "text",
+  city: "text",
+});
+
+businessSchema.index({ owner_id: 1 });
+businessSchema.index({ category: 1, sub_category: 1 });
+businessSchema.index({ verified_status: 1, is_active: 1 });
 
 const Business = mongoose.model("Business", businessSchema);
 module.exports = Business;

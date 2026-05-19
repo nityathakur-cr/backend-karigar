@@ -1,6 +1,9 @@
 const User = require("../../api/user/userModel");
 const { auth } = require("../../config/firebase");
 
+const PUBLIC_SIGNUP_ROLES = ["user", "businessOwner"];
+const MANAGEABLE_ROLES = ["user", "businessOwner", "manager"];
+
 const loginUser = async (req, res) => {
   try {
     const { uid, email, name, picture, phone_number } = req.user;
@@ -10,7 +13,7 @@ const loginUser = async (req, res) => {
 
     if (!user) {
       let assignedRole = "user";
-      if (role && ["user", "businessOwner"].includes(role)) {
+      if (role && PUBLIC_SIGNUP_ROLES.includes(role)) {
         assignedRole = role;
       }
 
@@ -135,7 +138,7 @@ const getAllUsers = async (req, res) => {
     const { role, is_blocked, search, page = 1, limit = 20 } = req.query;
 
     const filter = {};
-    if (role && ["user", "businessOwner"].includes(role)) {
+    if (role && MANAGEABLE_ROLES.includes(role)) {
       filter.role = role;
     }
     if (is_blocked !== undefined) {
@@ -176,8 +179,10 @@ const changeUserRole = async (req, res) => {
     const { userId } = req.params;
     const { role } = req.body;
 
-    if (!["user", "businessOwner"].includes(role)) {
-      return res.status(400).json({ message: "Role must be user or owner" });
+    if (!MANAGEABLE_ROLES.includes(role)) {
+      return res
+        .status(400)
+        .json({ message: "Role must be user, businessOwner, or manager" });
     }
 
     const user = await User.findByIdAndUpdate(userId, { role }, { new: true });

@@ -57,6 +57,16 @@ const isBusinessOwner = async (req, res, next) => {
   next();
 };
 
+const isVerifier = async (req, res, next) => {
+  if (!req.dbUser) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+  if (!["manager", "admin"].includes(req.dbUser.role)) {
+    return res.status(403).json({ message: "Verifier access required" });
+  }
+  next();
+};
+
 // const isAdmin = async (req, res, next) => {
 //   try {
 //     const user = await User.findOne({ firebase_uid: req.user.uid });
@@ -85,4 +95,10 @@ const isBusinessOwner = async (req, res, next) => {
 //   }
 // };
 
-module.exports = { verifyToken, checkUser, isAdmin, isBusinessOwner };
+module.exports = {
+  verifyToken,
+  checkUser,
+  isAdmin,
+  isBusinessOwner,
+  isVerifier,
+};
