@@ -1,10 +1,14 @@
+// THESE CONTROLLERS ARE ALREADY MADE IN AUTH.CONTROLLER.JS 
+// REFER TO THEM
+
 const User = require("./userModel");
 const bcrypt = require("bcrypt");
 
-// API to create User
+// API to create User - old JWT style -> check auth.controller.js in auth for new one
 const createUser = async (req, res) => {
   try {
     const { name, email, password, phone, role } = req.body;
+    const profile_image;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -18,7 +22,7 @@ const createUser = async (req, res) => {
 
     const hashedPassword = bcrypt.hash(password, 10);
     const user = await User.create({
-      fullname,
+      name,
       email,
       password: hashedPassword,
       phone,
@@ -42,7 +46,6 @@ const createUser = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select("-password");
-
     res.status(200).json({
       message: "Fetched All Users",
       count: users.length,
@@ -87,23 +90,11 @@ const getUserByID = async (req, res) => {
 // API to Update User
 const updateUser = async (req, res) => {
   try {
-    const userID = req.user?.id;
     const { name, phone } = req.body;
     const profile_image = req.file;
 
-    if (!userID) {
-      return res.status(401).json({
-        message: "User Unauthorized",
-      });
-    }
-
-    const existingUser = await User.findById(userID);
-    if (!existingUser) {
-      return res.status(404).json({
-        message: "User Not Found",
-      });
-    }
-
+    const existingUser = req.dbUser;
+   
     if (name) {
       existingUser.name = name;
     }

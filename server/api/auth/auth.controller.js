@@ -1,13 +1,14 @@
 const User = require("../../api/user/userModel");
 const { auth } = require("../../config/firebase");
 
-const PUBLIC_SIGNUP_ROLES = ["user", "businessOwner"];
-const MANAGEABLE_ROLES = ["user", "businessOwner", "manager"];
-
+// loginUser - req.user will only contain email and uid as what firebase decodes
 const loginUser = async (req, res) => {
   try {
     const { uid, email, name, picture, phone_number } = req.user;
     const { role } = req.body;
+    // const { uid, email, name } = req.user;
+    // const { phone, role } = req.body;
+    // const { picture } = req.files;
 
     let user = await User.findOne({ firebase_uid: uid });
 
@@ -54,7 +55,7 @@ const loginUser = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const user = await User.findOne({ firebase_uid: req.user.uid });
+    const user = await User.findOne({  });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
