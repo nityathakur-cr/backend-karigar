@@ -1,0 +1,153 @@
+const mongoose = require("mongoose");
+const Category = require("./categoryModel");
+const SubCategory = require("../subCategory/subCategoryModel");
+
+const getCategories = async (req, res) => {
+  try {
+    const { status = "active" } = req.body;
+    const filter = status ? { status } : {};
+    const categories = await Category.find(filter).sort({ name: 1 });
+    return res.status(200).json({ categories });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const createCategory = async (req, res) => {
+  try {
+    const { name, image, icon, status } = req.body;
+    if (!name) {
+      return res.status(400).json({ message: "Category name is required" });
+    }
+
+    const category = await Category.create({ name, image, icon, status });
+    return res.status(201).json({ message: "Category created", category });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Category already exists" });
+    }
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const updateCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+      return res.status(400).json({ message: "Invalid category id" });
+    }
+
+    const { name, image, icon, status } = req.body;
+    const category = await Category.findByIdAndUpdate(
+      categoryId,
+      {
+        ...(name && { name }),
+        ...(image && { image }),
+        ...(icon && { icon }),
+        ...(status && { status }),
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!category)
+      return res.status(404).json({ message: "Category not found" });
+    return res.status(200).json({ message: "Category updated", category });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Category already exists" });
+    }
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const createSubCategory = async (req, res) => {
+  try {
+    const { category_id, name, image, icon, status } = req.body;
+    if (!category_id || !name) {
+      return res
+        .status(400)
+        .json({ message: "Category and name are required" });
+    }
+
+    const categoryExists = await Category.findById(category_id);
+    if (!categoryExists) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    const subCategory = await SubCategory.create({
+      category_id,
+      name,
+      image,
+      icon,
+      status,
+    });
+    return res
+      .status(201)
+      .json({ message: "Sub category created", subCategory });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Sub category already exists" });
+    }
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getSubCategories = async (req, res) => {
+  try {
+    const { category_id, status = "active" } = req.body;
+    const filter = {};
+    if (category_id) filter.category_id = category_id;
+    if (status) filter.status = status;
+
+    const subCategories = await SubCategory.find(filter)
+      .populate("category_id", "name")
+      .sort({ name: 1 });
+
+    return res.status(200).json({ subCategories });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const updateSubCategory = async (req, res) => {
+  try {
+    const { subCategoryId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(subCategoryId)) {
+      return res.status(400).json({ message: "Invalid sub category id" });
+    }
+
+    const { name, image, icon, status } = req.body;
+    const subCategory = await SubCategory.findByIdAndUpdate(
+      subCategoryId,
+      {
+        ...(name && { name }),
+        ...(image && { image }),
+        ...(icon && { icon }),
+        ...(status && { status }),
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!subCategory)
+      return res.status(404).json({ message: "Sub category not found" });
+    return res
+      .status(200)
+      .json({ message: "Sub category updated", subCategory });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(409)
+        .json({ message: "Sub category already exists in this category" });
+    }
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+module.exports = {
+  getCategories,
+  createCategory,
+  updateCategory,
+  createSubCategory,
+  getSubCategories,
+  updateSubCategory,
+};

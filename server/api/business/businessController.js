@@ -169,7 +169,7 @@ const updateBusiness = async (req, res) => {
       }
     });
 
-    if (req.body.name && req.body.name !== currentName) {
+    if (req.body.name !== currentName) {
       business.slug = await buildUniqueSlug(req.body.name, req.body.slug);
     }
 

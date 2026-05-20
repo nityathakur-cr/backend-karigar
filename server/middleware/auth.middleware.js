@@ -12,6 +12,13 @@ const verifyToken = async (req, res, next) => {
 
   try {
     const decoded = await auth.verifyIdToken(token);
+    // console.log("Decoded token:", decoded);
+    // if (!decoded.uid) {
+    //   return res
+    //     .status(401)
+    //     .json({ message: "Invalid token: Missing firebase_uid" });
+    // }
+
     req.user = decoded;
     next();
   } catch (error) {
