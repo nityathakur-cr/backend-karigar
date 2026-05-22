@@ -20,21 +20,21 @@ router.post(
   getVerificationBusinesses,
 );
 router.post(
-  "/:businessId/approve",
+  "/approve",
   verifyToken,
   checkUser,
   isVerifier,
   approveBusiness,
 );
 router.post(
-  "/:businessId/reject",
+  "/reject",
   verifyToken,
   checkUser,
   isVerifier,
   rejectBusiness,
 );
 router.post(
-  "/:businessId/history",
+  "/history",
   verifyToken,
   checkUser,
   isVerifier,

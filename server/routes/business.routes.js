@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   verifyToken,
   checkUser,
+  optionalCheckUser,
   isBusinessOwner,
 } = require("../middleware/auth.middleware");
 const {
@@ -13,6 +14,7 @@ const {
   getMyBusinesses,
   deleteBusiness,
   getApprovedBusinesses,
+  getHomeSections,
   getBusinessDetails,
   trackBusinessAction,
   suspendBusiness,
@@ -35,28 +37,28 @@ router.post(
   getMyBusinesses,
 );
 router.post(
-  "/:businessId/update",
+  "/update",
   verifyToken,
   checkUser,
   isBusinessOwner,
   updateBusiness,
 );
 router.post(
-  "/:businessId/timing",
+  "/timing",
   verifyToken,
   checkUser,
   isBusinessOwner,
   updateBusinessTiming,
 );
 router.post(
-  "/:businessId/images",
+  "/images",
   verifyToken,
   checkUser,
   isBusinessOwner,
   updateBusinessImages,
 );
 router.post(
-  "/:businessId/delete",
+  "/delete",
   verifyToken,
   checkUser,
   isBusinessOwner,
@@ -64,13 +66,14 @@ router.post(
 );
 
 // User routes
+router.post("/home", getHomeSections);
 router.post("/list", getApprovedBusinesses);
-router.post("/details/:idOrSlug", getBusinessDetails);
-router.post("/:businessId/track/:action", trackBusinessAction);
+router.post("/details", optionalCheckUser, getBusinessDetails);
+router.post("/track", trackBusinessAction);
 
 // Admin routes
 router.post(
-  "/:businessId/suspend",
+  "/suspend",
   verifyToken,
   checkUser,
   isAdmin,

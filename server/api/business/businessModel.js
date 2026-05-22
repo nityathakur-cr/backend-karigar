@@ -139,6 +139,7 @@ businessSchema.index({
 businessSchema.index({ owner_id: 1 });
 businessSchema.index({ category: 1, sub_category: 1 });
 businessSchema.index({ verified_status: 1, is_active: 1 });
+businessSchema.index({ "coordinates.latitude": 1, "coordinates.longitude": 1 });
 
 const Business = mongoose.model("Business", businessSchema);
 module.exports = Business;

@@ -27,14 +27,14 @@ router.post(
   createSubCategory,
 );
 router.post(
-  "/:categoryId/update",
+  "/update",
   verifyToken,
   checkUser,
   isAdmin,
   updateCategory,
 );
 router.post(
-  "/sub-categories/:subCategoryId/update",
+  "/sub-categories/update",
   verifyToken,
   checkUser,
   isAdmin,
