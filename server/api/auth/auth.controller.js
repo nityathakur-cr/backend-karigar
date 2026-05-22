@@ -1,6 +1,7 @@
 const User = require("../../api/user/userModel");
 const { auth } = require("../../config/firebase");
 
+const PUBLIC_SIGNUP_ROLES = ["user", "businessOwner", "manager", "admin"]
 // loginUser - req.user will only contain email and uid as what firebase decodes
 const loginUser = async (req, res) => {
   try {
