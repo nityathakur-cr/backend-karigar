@@ -21,6 +21,7 @@ const createCity = async (req, res) => {
     });
     return res.status(201).json({
       message: "City Created",
+      city,
       data: city,
     });
   } catch (error) {
@@ -49,10 +50,16 @@ const getAllCities = async (req, res) => {
 // API to get active cities
 const getActiveCities = async (req, res) => {
   try {
-    const cities = await City.find({status: "active"});
+    const { state, status = "active" } = req.body;
+    const filter = {};
+    if (status) filter.status = status;
+    if (state) filter.state = new RegExp(state, "i");
+
+    const cities = await City.find(filter);
     return res.status(200).json({
       message: "Fetched Active Cities",
       count: cities.length,
+      cities,
       data: cities,
     });
   } catch (error) {
@@ -91,9 +98,13 @@ const getCityById = async (req, res) => {
 // API to update City
 const updateCity = async (req, res) => {
   try {
-    const { id, name, state } = req.body;
+    const id = req.body.cityId || req.body.id;
+    const { name, state, status } = req.body;
 
-    if (!name && !state) {
+    if (!id) {
+      return res.status(400).json({ message: "City ID is required" });
+    }
+    if (!name && !state && status === undefined) {
       return res.status(400).json({
         message: "All fields are required",
       });
@@ -107,8 +118,9 @@ const updateCity = async (req, res) => {
     const city = await City.findByIdAndUpdate(
       id,
       {
-        name,
-        state,
+        ...(name && { name }),
+        ...(state && { state }),
+        ...(status !== undefined && { status }),
       },
       {
         new: true,
@@ -118,6 +130,7 @@ const updateCity = async (req, res) => {
 
     return res.status(200).json({
       message: "City Updated",
+      city,
       data: city,
     });
   } catch (error) {

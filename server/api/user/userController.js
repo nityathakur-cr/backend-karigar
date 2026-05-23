@@ -8,7 +8,7 @@ const bcrypt = require("bcrypt");
 const createUser = async (req, res) => {
   try {
     const { name, email, password, phone, role } = req.body;
-    const profile_image;
+    let profile_image = "";
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -20,13 +20,14 @@ const createUser = async (req, res) => {
       profile_image = req.file.path;
     }
 
-    const hashedPassword = bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
       phone,
       role,
+      profile_image,
     });
 
     return res.status(201).json({
@@ -61,14 +62,14 @@ const getAllUsers = async (req, res) => {
 // API to get user by ID
 const getUserByID = async (req, res) => {
   try {
-    const userID = req.user?.id;
-    if (!userID) {
-      return res.status(401).json({
-        message: "User Unauthorized",
-      });
-    }
+    const { userId } = req.body;
+    let user;
 
-    const user = await User.findById(userID).select("-password");
+    if (userId) {
+      user = await User.findById(userId);
+    } else if (req.dbUser) {
+      user = req.dbUser;
+    }
 
     if (!user) {
       return res.status(404).json({
@@ -95,6 +96,12 @@ const updateUser = async (req, res) => {
 
     const existingUser = req.dbUser;
    
+    if (!existingUser) {
+      return res.status(404).json({
+        message: "User not Found",
+      });
+    }
+
     if (name) {
       existingUser.name = name;
     }
@@ -120,20 +127,23 @@ const updateUser = async (req, res) => {
 // API to Delete User
 const deleteUser = async (req, res) => {
   try {
-    const userID = req.user?.id;
-    if (!userID) {
-      return res.status(401).json({
-        message: "User Unauthorized",
-      });
-    }
     // only admin can delete the user
-    if (req.user.role !== "admin") {
+    if (!req.dbUser || req.dbUser.role !== "admin") {
       return res.status(403).json({
         message: "Forbidden!! Only admin can delete the user",
       });
     }
 
-    const existingUser = await User.findById(userID).select("-password");
+    const { userId } = req.body;
+    const targetUserId = userId || req.dbUser?._id;
+
+    if (!targetUserId) {
+      return res.status(400).json({
+        message: "User ID is required",
+      });
+    }
+
+    const existingUser = await User.findById(targetUserId);
     if (!existingUser || existingUser.is_blocked) {
       return res.status(404).json({
         message: "User Not Found",

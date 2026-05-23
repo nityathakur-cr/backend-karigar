@@ -8,8 +8,6 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
-AGENTS.md
-SKILL.md
 
 # uploads (optional if you don’t want images tracked)
 uploads/

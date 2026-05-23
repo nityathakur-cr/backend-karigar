@@ -32,7 +32,7 @@ const createCategory = async (req, res) => {
 
 const updateCategory = async (req, res) => {
   try {
-    const { categoryId } = req.params;
+    const { categoryId } = req.body;
     if (!mongoose.Types.ObjectId.isValid(categoryId)) {
       return res.status(400).json({ message: "Invalid category id" });
     }
@@ -111,7 +111,7 @@ const getSubCategories = async (req, res) => {
 
 const updateSubCategory = async (req, res) => {
   try {
-    const { subCategoryId } = req.params;
+    const { subCategoryId } = req.body;
     if (!mongoose.Types.ObjectId.isValid(subCategoryId)) {
       return res.status(400).json({ message: "Invalid sub category id" });
     }
