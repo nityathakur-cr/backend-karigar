@@ -1,6 +1,6 @@
 const User = require("../../api/user/userModel");
 const { auth } = require("../../config/firebase");
-const { signAppToken } = require("../../utils/jwt");
+const jwt = require("jsonwebtoken");
 const Business = require("../business/businessModel");
 const Category = require("../category/categoryModel");
 const City = require("../cities/citiesModel");
@@ -11,16 +11,7 @@ const { logAdminActivity } = require("../adminActivity/adminActivityController")
 const ALLOWED_SIGNUP_ROLES = ["user", "businessOwner"];
 const ADMIN_ASSIGNABLE_ROLES = ["user", "businessOwner", "manager", "admin"];
 
-const buildAuthResponse = (user, message, isNew) => {
-  const token = signAppToken(user);
-  return {
-    message,
-    isNew,
-    user,
-    token,
-    tokenType: "Bearer",
-  };
-};
+
 
 const loginUser = async (req, res) => {
   try {
@@ -44,9 +35,10 @@ const loginUser = async (req, res) => {
         role: assignedRole,
         is_blocked: false,
       });
+      const signToken = await jwt.sign({ _id: newUser._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" })
       return res
         .status(201)
-        .json(buildAuthResponse(newUser, "User created successfully", true));
+        .json({ user: newUser, token: signToken, message: "User created successfully", isNew: true });
     }
 
     if (user.is_blocked) {
@@ -55,10 +47,9 @@ const loginUser = async (req, res) => {
         is_blocked: true,
       });
     }
+    const signToken = await jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" })
 
-    return res
-      .status(200)
-      .json(buildAuthResponse(user, "Login successful", false));
+    return res.status(200).json({ user: user, token: signToken, message: "Login successful", isNew: false })
   } catch (error) {
     console.log("Error in syncing:", error);
     return res.status(500).json({ message: "Internal server error" });

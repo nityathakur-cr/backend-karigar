@@ -16,7 +16,7 @@ const {
   searchAdmin,
 } = require("../api/auth/auth.controller");
 
-router.post("/login", verifyFirebaseToken, loginUser);
+router.post("/login", verifyToken, loginUser);
 router.post("/me", verifyToken, checkUser, getMe);
 router.post("/profile", verifyToken, checkUser, updateProfile);
 
