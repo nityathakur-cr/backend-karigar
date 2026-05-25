@@ -2,12 +2,11 @@ const { auth } = require("../config/firebase");
 const User = require("../api/user/userModel");
 const { verifyAppToken } = require("../utils/jwt");
 
-
-
 const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    console.warn("[verifyToken] Missing or malformed Authorization header:", authHeader);
     return res.status(401).json({ message: "No token provided" });
   }
 
@@ -19,6 +18,8 @@ const verifyToken = async (req, res, next) => {
     req.authType = "firebase";
     return next();
   } catch (firebaseError) {
+    console.warn("[verifyToken] Firebase verification failed:", firebaseError.message);
+
     try {
       const payload = verifyAppToken(token);
       req.user = {
@@ -29,6 +30,8 @@ const verifyToken = async (req, res, next) => {
       req.authType = "jwt";
       return next();
     } catch (jwtError) {
+      console.error("[verifyToken] JWT verification also failed:", jwtError.message);
+      console.error("[verifyToken] Both Firebase and JWT verification failed for token (first 20 chars):", token?.slice(0, 20) + "...");
       return res.status(401).json({ message: "Invalid or expired token" });
     }
   }
@@ -37,23 +40,29 @@ const verifyToken = async (req, res, next) => {
 const checkUser = async (req, res, next) => {
   try {
     let user;
+
     if (req.authType === "jwt" && req.user.userId) {
       user = await User.findById(req.user.userId);
     }
+
     if (!user && req.user.uid) {
       user = await User.findOne({ firebase_uid: req.user.uid });
     }
+
     if (!user) {
+      console.warn("[checkUser] User not found for req.user:", req.user);
       return res.status(404).json({ message: "User not found" });
     }
+
     if (user.is_blocked) {
-      return res
-        .status(403)
-        .json({ message: "Your account has been blocked by admin" });
+      console.warn("[checkUser] Blocked user attempted access:", user._id);
+      return res.status(403).json({ message: "Your account has been blocked by admin" });
     }
+
     req.dbUser = user;
     next();
   } catch (err) {
+    console.error("[checkUser] Internal error:", err);
     return res.status(500).json({ message: "Internal server error" });
   }
 };

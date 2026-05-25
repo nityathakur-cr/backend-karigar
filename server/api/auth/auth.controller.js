@@ -26,7 +26,7 @@ const loginUser = async (req, res) => {
         assignedRole = role;
       }
 
-      const newUser = await User.create({
+      const newUserPayload = {
         firebase_uid: uid,
         name: name || "",
         email: email || null,
@@ -34,24 +34,57 @@ const loginUser = async (req, res) => {
         profile_image: picture || "",
         role: assignedRole,
         is_blocked: false,
+      };
+
+      const newUser = await User.create(newUserPayload);
+
+      const payload = {
+        _id: newUser._id.toString(),
+        userId: newUser._id.toString(),
+        uid: newUser.firebase_uid,
+        role: newUser.role,
+      };
+
+      const signToken = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN || "7d",
       });
-      const signToken = await jwt.sign({ _id: newUser._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" })
-      return res
-        .status(201)
-        .json({ user: newUser, token: signToken, message: "User created successfully", isNew: true });
+
+      return res.status(201).json({
+        user: newUser,
+        token: signToken,
+        message: "User created successfully",
+        isNew: true,
+      });
     }
 
     if (user.is_blocked) {
+      console.warn("[loginUser] Blocked user attempted login:", { _id: user._id, email: user.email });
       return res.status(403).json({
         message: "Your account has been blocked",
         is_blocked: true,
       });
     }
-    const signToken = await jwt.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || "7d" })
 
-    return res.status(200).json({ user: user, token: signToken, message: "Login successful", isNew: false })
+    const payload = {
+      _id: user._id.toString(),
+      userId: user._id.toString(),
+      uid: user.firebase_uid,
+      role: user.role,
+    };
+
+    const signToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    });
+
+    return res.status(200).json({
+      user: user,
+      token: signToken,
+      message: "Login successful",
+      isNew: false,
+    });
+
   } catch (error) {
-    console.log("Error in syncing:", error);
+    console.error("[loginUser] Unexpected error:", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
