@@ -15,10 +15,12 @@ const {
   changeUserRole,
   searchAdmin,
 } = require("../api/auth/auth.controller");
+const upload = require("../middleware/upload")
 
+// For Multer Upload => upload.single("fieldname")
 router.post("/login", verifyToken, loginUser);
 router.post("/me", verifyToken, checkUser, getMe);
-router.post("/profile", verifyToken, checkUser, updateProfile);
+router.post("/profile", verifyToken, checkUser, upload.single("profile_image"),updateProfile);
 
 router.post("/users", verifyToken, checkUser, isAdmin, getAllUsers);
 router.post("/search", verifyToken, checkUser, isAdmin, searchAdmin);

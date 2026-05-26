@@ -76,7 +76,7 @@ const businessSchema = new mongoose.Schema(
     logo: {
       type: String,
     },
-    images: [{ type: String }],
+    business_images: [{ type: String }],
     rating: {
       type: Number,
       default: 0,

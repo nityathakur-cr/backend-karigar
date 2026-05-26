@@ -12,7 +12,7 @@ const subCategorySchema = new mongoose.Schema(
       required: true,
       // unique: true,
     },
-    image: {
+    subcategory_image: {
       type: String,
     },
     icon: {

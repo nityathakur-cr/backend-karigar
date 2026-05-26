@@ -1,17 +1,18 @@
 const User = require("../../api/user/userModel");
 const { auth } = require("../../config/firebase");
 const jwt = require("jsonwebtoken");
+const path = require("path");
 const Business = require("../business/businessModel");
 const Category = require("../category/categoryModel");
 const City = require("../cities/citiesModel");
 const Report = require("../reports/reportModel");
 const Verification = require("../verification/verificationModel");
-const { logAdminActivity } = require("../adminActivity/adminActivityController");
+const {
+  logAdminActivity,
+} = require("../adminActivity/adminActivityController");
 
 const ALLOWED_SIGNUP_ROLES = ["user", "businessOwner"];
 const ADMIN_ASSIGNABLE_ROLES = ["user", "businessOwner", "manager", "admin"];
-
-
 
 const loginUser = async (req, res) => {
   try {
@@ -58,7 +59,10 @@ const loginUser = async (req, res) => {
     }
 
     if (user.is_blocked) {
-      console.warn("[loginUser] Blocked user attempted login:", { _id: user._id, email: user.email });
+      console.warn("[loginUser] Blocked user attempted login:", {
+        _id: user._id,
+        email: user.email,
+      });
       return res.status(403).json({
         message: "Your account has been blocked",
         is_blocked: true,
@@ -82,7 +86,6 @@ const loginUser = async (req, res) => {
       message: "Login successful",
       isNew: false,
     });
-
   } catch (error) {
     console.error("[loginUser] Unexpected error:", error);
     return res.status(500).json({ message: "Internal server error" });
@@ -99,17 +102,24 @@ const getMe = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, phone, profile_image } = req.body;
+    const { name } = req.body;
+    let profile_image;
 
-    const user = await User.findOneAndUpdate(
-      { _id: req.dbUser._id },
-      {
-        ...(name && { name }),
-        ...(phone && { phone }),
-        ...(profile_image && { profile_image }),
-      },
-      { new: true },
-    );
+    if (req.file) {
+      profile_image = path
+        .join("uploads", "profile-images", req.file.filename)
+        .replace(/\\/g, "/");
+    }
+
+    const updateData = {};
+
+    if (name !== undefined) updateData.name = name;
+    if (profile_image !== undefined) updateData.profile_image = profile_image;
+
+    const user = await User.findByIdAndUpdate(req.dbUser._id, updateData, {
+      new: true,
+      runValidators: true,
+    });
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -120,6 +130,7 @@ const updateProfile = async (req, res) => {
       user,
     });
   } catch (error) {
+    console.error("[updateProfile]", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -197,8 +208,7 @@ const getAllUsers = async (req, res) => {
       resource: "user",
       details: {
         role: role || null,
-        is_blocked:
-          is_blocked === undefined ? null : is_blocked === "true",
+        is_blocked: is_blocked === undefined ? null : is_blocked === "true",
         search: search || "",
         page: Number(page),
         limit: Number(limit),
@@ -406,7 +416,11 @@ const searchAdmin = async (req, res) => {
     await logAdminActivity(req, {
       action: "global_search",
       resource: "search",
-      details: { q: query, include: Array.from(includeSet), limit: Number(limit) },
+      details: {
+        q: query,
+        include: Array.from(includeSet),
+        limit: Number(limit),
+      },
     });
 
     return res.status(200).json({

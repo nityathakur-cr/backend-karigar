@@ -21,7 +21,8 @@ app.use(cors({ origin: "*", credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
-app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+// app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
+app.use("/uploads", express.static(path.join("public/uploads")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);

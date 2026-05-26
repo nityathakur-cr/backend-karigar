@@ -1,7 +1,10 @@
 const mongoose = require("mongoose");
 const Category = require("./categoryModel");
 const SubCategory = require("../subCategory/subCategoryModel");
-const { logAdminActivity } = require("../adminActivity/adminActivityController");
+const {
+  logAdminActivity,
+} = require("../adminActivity/adminActivityController");
+const path = require("node:path");
 
 const getCategories = async (req, res) => {
   try {
@@ -16,12 +19,25 @@ const getCategories = async (req, res) => {
 
 const createCategory = async (req, res) => {
   try {
-    const { name, image, icon, status } = req.body;
+    const { name, icon, status } = req.body;
     if (!name) {
       return res.status(400).json({ message: "Category name is required" });
     }
 
-    const category = await Category.create({ name, image, icon, status });
+    let category_image;
+
+    if (req.file) {
+      category_image = path
+        .join("uploads", "category-images", req.file.filename)
+        .replace(/\\/g, "/");
+    }
+
+    const category = await Category.create({
+      name,
+      category_image,
+      icon,
+      status,
+    });
     await logAdminActivity(req, {
       action: "create_category",
       resource: "category",
@@ -45,12 +61,19 @@ const updateCategory = async (req, res) => {
       return res.status(400).json({ message: "Invalid category id" });
     }
 
-    const { name, image, icon, status } = req.body;
+    const { name, icon, status } = req.body;
+    let category_image;
+
+    if (req.file) {
+      category_image = path
+        .join("uploads", "category-images", req.file.filename)
+        .replace(/\\/g, "/");
+    }
     const category = await Category.findByIdAndUpdate(
       categoryId,
       {
         ...(name && { name }),
-        ...(image && { image }),
+        ...(category_image && { category_image }),
         ...(icon && { icon }),
         ...(status && { status }),
       },
@@ -77,7 +100,14 @@ const updateCategory = async (req, res) => {
 
 const createSubCategory = async (req, res) => {
   try {
-    const { category_id, name, image, icon, status } = req.body;
+    const { category_id, name, icon, status } = req.body;
+    let subcategory_image;
+
+    if (req.file) {
+      subcategory_image = path
+        .join("uploads", "subcategory-images", req.file.filename)
+        .replace(/\\/g, "/");
+    }
     if (!category_id || !name) {
       return res
         .status(400)
@@ -92,7 +122,7 @@ const createSubCategory = async (req, res) => {
     const subCategory = await SubCategory.create({
       category_id,
       name,
-      image,
+      subcategory_image,
       icon,
       status,
     });
@@ -138,12 +168,19 @@ const updateSubCategory = async (req, res) => {
       return res.status(400).json({ message: "Invalid sub category id" });
     }
 
-    const { name, image, icon, status } = req.body;
+    const { name, icon, status } = req.body;
+    let subcategory_image;
+
+    if (req.file) {
+      subcategory_image = path
+        .join("uploads", "subcategory-images", req.file.filename)
+        .replace(/\\/g, "/");
+    }
     const subCategory = await SubCategory.findByIdAndUpdate(
       subCategoryId,
       {
         ...(name && { name }),
-        ...(image && { image }),
+        ...(subcategory_image && { subcategory_image }),
         ...(icon && { icon }),
         ...(status && { status }),
       },

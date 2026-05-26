@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const upload = require("../middleware/upload");
 const {
   verifyToken,
   checkUser,
@@ -18,12 +19,20 @@ router.post("/list", getCategories);
 router.post("/sub-categories/list", getSubCategories);
 
 // admin routes
-router.post("/create", verifyToken, checkUser, isAdmin, createCategory);
+router.post(
+  "/create",
+  verifyToken,
+  checkUser,
+  isAdmin,
+  upload.single("category_image"),
+  createCategory,
+);
 router.post(
   "/sub-categories/create",
   verifyToken,
   checkUser,
   isAdmin,
+  upload.single("subcategory_image"),
   createSubCategory,
 );
 router.post(
@@ -31,6 +40,7 @@ router.post(
   verifyToken,
   checkUser,
   isAdmin,
+  upload.single("category_image"),
   updateCategory,
 );
 router.post(
@@ -38,6 +48,8 @@ router.post(
   verifyToken,
   checkUser,
   isAdmin,
+  upload.single("subcategory_image"),
+
   updateSubCategory,
 );
 

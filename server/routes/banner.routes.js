@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const upload = require("../middleware/upload")
 const {
   verifyToken,
   checkUser,
@@ -12,7 +13,7 @@ const {
 } = require("../api/banner/bannerController");
 
 router.post("/list", getActiveBanners);
-router.post("/create", verifyToken, checkUser, isAdmin, createBanner);
+router.post("/create", verifyToken, checkUser, isAdmin,upload.single("banner_image"), createBanner);
 router.post("/update", verifyToken, checkUser, isAdmin, updateBanner);
 
 module.exports = router;

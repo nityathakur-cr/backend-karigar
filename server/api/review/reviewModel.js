@@ -23,7 +23,7 @@ const reviewSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    images: [{ type: String }],
+    review_images: [{ type: String }],
     helpful_count: {
       type: Number,
       default: 0,

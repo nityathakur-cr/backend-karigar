@@ -1,9 +1,12 @@
 const mongoose = require("mongoose");
 const Business = require("./businessModel");
+const path = require("path");
 const Verification = require("../verification/verificationModel");
 const Analytics = require("../businessAnalytics/analyticsModel");
 const RecentView = require("../recentView/recentModel");
-const { logAdminActivity } = require("../adminActivity/adminActivityController");
+const {
+  logAdminActivity,
+} = require("../adminActivity/adminActivityController");
 const {
   isBusinessOpenNow,
   haversineKm,
@@ -83,6 +86,95 @@ const applyPostListFilters = (businesses, options) => {
   return result;
 };
 
+// const registerBusiness = async (req, res) => {
+//   try {
+//     const {
+//       name,
+//       slug,
+//       category,
+//       sub_category,
+//       description,
+//       phone,
+//       whatsapp,
+//       website,
+//       email,
+//       address,
+//       city,
+//       state,
+//       country,
+//       pincode,
+//       coordinates,
+//       timing,
+//       services,
+//       logo,
+//     } = req.body;
+
+//     const business_images = req.files
+//       ? req.files.map((file) =>
+//           path
+//             .join("uploads", "business-images", file.filename)
+//             .replace(/\\/g, "/"),
+//         )
+//       : [];
+//     const existingPhone = await Business.findOne({
+//       phone,
+//       owner_id: req.dbUser._id,
+//     });
+//     if (existingPhone) {
+//       return res
+//         .status(409)
+//         .json({ message: "Business with this phone already exists" });
+//     }
+
+//     const uniqueSlug = await buildUniqueSlug(name, slug);
+
+//     const business = await Business.create({
+//       owner_id: req.dbUser._id,
+//       name,
+//       slug: uniqueSlug,
+//       category,
+//       sub_category,
+//       description,
+//       phone,
+//       whatsapp,
+//       website,
+//       email,
+//       address,
+//       city,
+//       state,
+//       country,
+//       pincode,
+//       coordinates,
+//       timing,
+//       services,
+//       logo,
+//       business_images,
+//       verified_status: "pending",
+//       is_active: true,
+//     });
+
+//     await Verification.create({
+//       business_id: business._id,
+//       action: "pending",
+//     });
+
+//     return res.status(201).json({
+//       message: "Business registered successfully and sent for verification",
+//       business,
+//     });
+//   } catch (error) {
+//     if (error.code === 11000) {
+//       return res.status(409).json({
+//         message: "Business with this slug or phone already exists",
+//       });
+//     }
+
+//     return res
+//       .status(500)
+//       .json({ message: `Internal server error: ${error.message}` });
+//   }
+// };
+
 const registerBusiness = async (req, res) => {
   try {
     const {
@@ -103,27 +195,29 @@ const registerBusiness = async (req, res) => {
       coordinates,
       timing,
       services,
-      logo,
-      images,
     } = req.body;
 
-    // if (
-    //   !name ||
-    //   !category ||
-    //   !sub_category ||
-    //   !description ||
-    //   !phone ||
-    //   !images ||
-    //   !Array.isArray(images) ||
-    //   images.length === 0
-    // ) {
-    //   return res.status(400).json({ message: "Bad request" });
-    // }
+    // Handle logo (single file)
+    const logo = req.files?.logo?.[0]
+      ? path
+          .join("uploads", "logo-images", req.files.logo[0].filename)
+          .replace(/\\/g, "/")
+      : "";
+
+    // Handle business images (multiple files)
+    const business_images = req.files?.business_images
+      ? req.files.business_images.map((file) =>
+          path
+            .join("uploads", "business-images", file.filename)
+            .replace(/\\/g, "/"),
+        )
+      : [];
 
     const existingPhone = await Business.findOne({
       phone,
       owner_id: req.dbUser._id,
     });
+
     if (existingPhone) {
       return res
         .status(409)
@@ -152,7 +246,7 @@ const registerBusiness = async (req, res) => {
       timing,
       services,
       logo,
-      images,
+      business_images,
       verified_status: "pending",
       is_active: true,
     });
@@ -173,11 +267,100 @@ const registerBusiness = async (req, res) => {
       });
     }
 
-    return res
-      .status(500)
-      .json({ message: `Internal server error: ${error.message}` });
+    return res.status(500).json({
+      message: `Internal server error: ${error.message}`,
+    });
   }
 };
+
+// const updateBusiness = async (req, res) => {
+//   try {
+//     const { businessId } = req.body;
+
+//     if (!mongoose.Types.ObjectId.isValid(businessId)) {
+//       return res.status(400).json({ message: "Invalid business id" });
+//     }
+
+//     const business = await Business.findById(businessId);
+//     if (!business) {
+//       return res.status(404).json({ message: "Business not found" });
+//     }
+
+//     const ownsBusiness =
+//       business.owner_id.toString() === req.dbUser._id.toString();
+//     if (!ownsBusiness && req.dbUser.role !== "admin") {
+//       return res
+//         .status(403)
+//         .json({ message: "Not allowed to update this business" });
+//     }
+
+//     const currentName = business.name;
+//     const allowedFields = [
+//       "name",
+//       "category",
+//       "sub_category",
+//       "description",
+//       "phone",
+//       "whatsapp",
+//       "website",
+//       "email",
+//       "address",
+//       "city",
+//       "state",
+//       "country",
+//       "pincode",
+//       "coordinates",
+//       "services",
+//       "logo",
+//       "business_images",
+//     ];
+
+//     allowedFields.forEach((field) => {
+//       if (req.body[field] !== undefined) {
+//         business[field] = req.body[field];
+//       }
+//     });
+
+//     if (req.body.name && req.body.name !== currentName) {
+//       business.slug = await buildUniqueSlug(req.body.name, req.body.slug);
+//     }
+
+//     if (ownsBusiness && business.verified_status !== "pending") {
+//       business.verified_status = "pending";
+//       business.verified_by = undefined;
+//       business.reject_reason = undefined;
+//       await Verification.create({
+//         business_id: business._id,
+//         action: "pending",
+//         reason: "Business updated by owner",
+//       });
+//     }
+
+//     await business.save();
+
+//     if (req.dbUser.role === "admin") {
+//       await logAdminActivity(req, {
+//         action: "update_business",
+//         resource: "business",
+//         resource_id: business._id,
+//         resource_model: "Business",
+//         details: { businessId, updatedBy: "admin" },
+//       });
+//     }
+
+//     return res.status(200).json({
+//       message: "Business updated successfully",
+//       business,
+//     });
+//   } catch (error) {
+//     if (error.code === 11000) {
+//       return res
+//         .status(409)
+//         .json({ message: "Business phone or slug already exists" });
+//     }
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
 
 const updateBusiness = async (req, res) => {
   try {
@@ -188,12 +371,14 @@ const updateBusiness = async (req, res) => {
     }
 
     const business = await Business.findById(businessId);
+
     if (!business) {
       return res.status(404).json({ message: "Business not found" });
     }
 
     const ownsBusiness =
       business.owner_id.toString() === req.dbUser._id.toString();
+
     if (!ownsBusiness && req.dbUser.role !== "admin") {
       return res
         .status(403)
@@ -201,6 +386,7 @@ const updateBusiness = async (req, res) => {
     }
 
     const currentName = business.name;
+
     const allowedFields = [
       "name",
       "category",
@@ -217,24 +403,44 @@ const updateBusiness = async (req, res) => {
       "pincode",
       "coordinates",
       "services",
-      "logo",
-      "images",
     ];
 
+    // Update normal fields
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         business[field] = req.body[field];
       }
     });
 
+    // Update logo (single file)
+    if (req.files?.logo?.[0]) {
+      business.logo = path
+        .join("uploads", "logo-images", req.files.logo[0].filename)
+        .replace(/\\/g, "/");
+    }
+
+    // Update business images (append new ones)
+    if (req.files?.business_images?.length) {
+      const newImages = req.files.business_images.map((file) =>
+        path
+          .join("uploads", "business-images", file.filename)
+          .replace(/\\/g, "/"),
+      );
+
+      business.business_images = [...business.business_images, ...newImages];
+    }
+
+    // Update slug if name changed
     if (req.body.name && req.body.name !== currentName) {
       business.slug = await buildUniqueSlug(req.body.name, req.body.slug);
     }
 
+    // Reset verification
     if (ownsBusiness && business.verified_status !== "pending") {
       business.verified_status = "pending";
       business.verified_by = undefined;
       business.reject_reason = undefined;
+
       await Verification.create({
         business_id: business._id,
         action: "pending",
@@ -259,12 +465,17 @@ const updateBusiness = async (req, res) => {
       business,
     });
   } catch (error) {
+    console.error("[updateBusiness]", error);
+
     if (error.code === 11000) {
       return res
         .status(409)
         .json({ message: "Business phone or slug already exists" });
     }
-    return res.status(500).json({ message: "Internal server error" });
+
+    return res.status(500).json({
+      message: `Internal server error: ${error.message}`,
+    });
   }
 };
 
@@ -313,31 +524,96 @@ const updateBusinessTiming = async (req, res) => {
   }
 };
 
+// const updateBusinessImages = async (req, res) => {
+//   try {
+//     const { businessId, logo, images } = req.body;
+
+//     if (!mongoose.Types.ObjectId.isValid(businessId)) {
+//       return res.status(400).json({ message: "Invalid business id" });
+//     }
+
+//     const business = await Business.findById(businessId);
+//     if (!business) {
+//       return res.status(404).json({ message: "Business not found" });
+//     }
+//     if (
+//       business.owner_id.toString() !== req.dbUser._id.toString() &&
+//       req.dbUser.role !== "admin"
+//     ) {
+//       return res
+//         .status(403)
+//         .json({ message: "Not allowed to update this business" });
+//     }
+
+//     if (logo !== undefined) business.logo = logo;
+//     if (images !== undefined) business.images = images;
+//     await business.save();
+
+//     if (req.dbUser.role === "admin") {
+//       await logAdminActivity(req, {
+//         action: "update_business_images",
+//         resource: "business",
+//         resource_id: business._id,
+//         resource_model: "Business",
+//         details: { businessId },
+//       });
+//     }
+
+//     return res
+//       .status(200)
+//       .json({ message: "Business images updated", business });
+//   } catch (error) {
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 const updateBusinessImages = async (req, res) => {
   try {
-    const { businessId, logo, images } = req.body;
+    const { businessId } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(businessId)) {
       return res.status(400).json({ message: "Invalid business id" });
     }
 
     const business = await Business.findById(businessId);
+
     if (!business) {
       return res.status(404).json({ message: "Business not found" });
     }
-    if (
-      business.owner_id.toString() !== req.dbUser._id.toString() &&
-      req.dbUser.role !== "admin"
-    ) {
+
+    const ownsBusiness =
+      business.owner_id.toString() === req.dbUser._id.toString();
+
+    if (!ownsBusiness && req.dbUser.role !== "admin") {
       return res
         .status(403)
         .json({ message: "Not allowed to update this business" });
     }
 
-    if (logo !== undefined) business.logo = logo;
-    if (images !== undefined) business.images = images;
+    // Update logo (replace old logo)
+    if (req.files?.logo?.[0]) {
+      business.logo = path
+        .join("uploads", "business-logos", req.files.logo[0].filename)
+        .replace(/\\/g, "/");
+    }
+
+    // Update business images (append new images)
+    if (req.files?.business_images?.length) {
+      const newImages = req.files.business_images.map((file) =>
+        path
+          .join("uploads", "business-images", file.filename)
+          .replace(/\\/g, "/")
+      );
+
+      business.business_images = [
+        ...business.business_images,
+        ...newImages,
+      ];
+    }
+
     await business.save();
 
+    // Admin log
     if (req.dbUser.role === "admin") {
       await logAdminActivity(req, {
         action: "update_business_images",
@@ -348,11 +624,17 @@ const updateBusinessImages = async (req, res) => {
       });
     }
 
-    return res
-      .status(200)
-      .json({ message: "Business images updated", business });
+    return res.status(200).json({
+      message: "Business images updated successfully",
+      business,
+    });
+
   } catch (error) {
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("[updateBusinessImages]", error);
+
+    return res.status(500).json({
+      message: `Internal server error: ${error.message}`,
+    });
   }
 };
 

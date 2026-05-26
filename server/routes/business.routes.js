@@ -20,6 +20,7 @@ const {
   suspendBusiness,
 } = require("../api/business/businessController");
 const { isAdmin } = require("../middleware/auth.middleware");
+const upload = require("../middleware/upload");
 
 // Business Owner Routes
 router.post(
@@ -27,8 +28,12 @@ router.post(
   verifyToken,
   checkUser,
   isBusinessOwner,
+  upload.fields([
+    { name: "logo", maxCount: 1 },
+    { name: "business_images", maxCount: 5 },
+  ]),
   registerBusiness,
-);  
+);
 router.post(
   "/owner/me",
   verifyToken,
@@ -41,6 +46,10 @@ router.post(
   verifyToken,
   checkUser,
   isBusinessOwner,
+  upload.fields([
+    { name: "logo", maxCount: 1 },
+    { name: "business_images", maxCount: 5 },
+  ]),
   updateBusiness,
 );
 router.post(
@@ -57,13 +66,7 @@ router.post(
   isBusinessOwner,
   updateBusinessImages,
 );
-router.post(
-  "/delete",
-  verifyToken,
-  checkUser,
-  isBusinessOwner,
-  deleteBusiness,
-);
+router.post("/delete", verifyToken, checkUser, isBusinessOwner, deleteBusiness);
 
 // User routes
 router.post("/home", getHomeSections);
@@ -72,12 +75,6 @@ router.post("/details", optionalCheckUser, getBusinessDetails);
 router.post("/track", trackBusinessAction);
 
 // Admin routes
-router.post(
-  "/suspend",
-  verifyToken,
-  checkUser,
-  isAdmin,
-  suspendBusiness,
-);
+router.post("/suspend", verifyToken, checkUser, isAdmin, suspendBusiness);
 
 module.exports = router;

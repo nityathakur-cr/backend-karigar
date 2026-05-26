@@ -6,7 +6,10 @@ const verifyToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    console.warn("[verifyToken] Missing or malformed Authorization header:", authHeader);
+    console.warn(
+      "[verifyToken] Missing or malformed Authorization header:",
+      authHeader,
+    );
     return res.status(401).json({ message: "No token provided" });
   }
 
@@ -18,7 +21,10 @@ const verifyToken = async (req, res, next) => {
     req.authType = "firebase";
     return next();
   } catch (firebaseError) {
-    console.warn("[verifyToken] Firebase verification failed:", firebaseError.message);
+    console.warn(
+      "[verifyToken] Firebase verification failed:",
+      firebaseError.message,
+    );
 
     try {
       const payload = verifyAppToken(token);
@@ -30,8 +36,14 @@ const verifyToken = async (req, res, next) => {
       req.authType = "jwt";
       return next();
     } catch (jwtError) {
-      console.error("[verifyToken] JWT verification also failed:", jwtError.message);
-      console.error("[verifyToken] Both Firebase and JWT verification failed for token (first 20 chars):", token?.slice(0, 20) + "...");
+      console.error(
+        "[verifyToken] JWT verification also failed:",
+        jwtError.message,
+      );
+      console.error(
+        "[verifyToken] Both Firebase and JWT verification failed for token (first 20 chars):",
+        token?.slice(0, 20) + "...",
+      );
       return res.status(401).json({ message: "Invalid or expired token" });
     }
   }
@@ -56,9 +68,10 @@ const checkUser = async (req, res, next) => {
 
     if (user.is_blocked) {
       console.warn("[checkUser] Blocked user attempted access:", user._id);
-      return res.status(403).json({ message: "Your account has been blocked by admin" });
+      return res
+        .status(403)
+        .json({ message: "Your account has been blocked by admin" });
     }
-
     req.dbUser = user;
     next();
   } catch (err) {
@@ -136,7 +149,6 @@ const optionalCheckUser = async (req, res, next) => {
 };
 
 module.exports = {
-
   verifyToken,
   checkUser,
   optionalCheckUser,

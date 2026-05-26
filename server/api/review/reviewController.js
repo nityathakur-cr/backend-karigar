@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Business = require("../business/businessModel");
 const { Review, ReviewVote } = require("./reviewModel");
-
+const path = require("path")
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 const REVIEW_SORT = {
@@ -36,91 +36,247 @@ const refreshBusinessRating = async (businessId) => {
   });
 };
 
+// const addReview = async (req, res) => {
+//   try {
+//     const businessId = req.body.businessId;
+//     const { rating, comment, review_images } = req.body;
+
+//     if (!businessId || !isValidId(businessId)) {
+//       return res.status(400).json({ message: "Invalid business id" });
+//     }
+//     if (!rating || rating < 1 || rating > 5) {
+//       return res
+//         .status(400)
+//         .json({ message: "Rating must be between 1 and 5" });
+//     }
+//     if (!comment) {
+//       return res.status(400).json({ message: "Comment is required" });
+//     }
+
+//     const business = await Business.findOne({
+//       _id: businessId,
+//       verified_status: "verified",
+//       is_active: true,
+//     });
+//     if (!business) {
+//       return res.status(404).json({ message: "Business not found" });
+//     }
+
+//     const review = await Review.create({
+//       business_id: businessId,
+//       user_id: req.dbUser._id,
+//       rating,
+//       comment,
+//       review_images: review_images || [],
+//     });
+
+//     await Business.findByIdAndUpdate(businessId, {
+//       $addToSet: { reviews: review._id },
+//     });
+//     await refreshBusinessRating(businessId);
+
+//     return res
+//       .status(201)
+//       .json({ message: "Review added successfully", review });
+//   } catch (error) {
+//     if (error.code === 11000) {
+//       return res
+//         .status(409)
+//         .json({ message: "You have already reviewed this business" });
+//     }
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
+// const editReview = async (req, res) => {
+//   try {
+//     const reviewId = req.body.reviewId;
+//     const { rating, comment, review_images } = req.body;
+
+//     if (!reviewId || !isValidId(reviewId)) {
+//       return res.status(400).json({ message: "Invalid reviewId" });
+//     }
+//     if (rating && (rating < 1 || rating > 5)) {
+//       return res
+//         .status(400)
+//         .json({ message: "Rating must be between 1 and 5" });
+//     }
+
+//     const review = await Review.findOne({
+//       _id: reviewId,
+//       user_id: req.dbUser._id,
+//     });
+//     if (!review) {
+//       return res.status(404).json({ message: "Review not found" });
+//     }
+
+//     if (rating !== undefined) review.rating = rating;
+//     if (comment !== undefined) review.comment = comment;
+//     if (review_images !== undefined) review.review_images = review_images;
+//     await review.save();
+//     await refreshBusinessRating(review.business_id);
+
+//     return res
+//       .status(200)
+//       .json({ message: "Review updated successfully", review });
+//   } catch (error) {
+//     return res.status(500).json({ message: "Internal server error" });
+//   }
+// };
+
 const addReview = async (req, res) => {
   try {
     const businessId = req.body.businessId;
-    const { rating, comment, images } = req.body;
+    const { rating, comment } = req.body;
 
+    // Handle uploaded review images
+    const review_images = req.files
+      ? req.files.map((file) =>
+          path
+            .join("uploads", "review-images", file.filename)
+            .replace(/\\/g, "/")
+        )
+      : [];
+
+    // Validate business ID
     if (!businessId || !isValidId(businessId)) {
-      return res.status(400).json({ message: "Invalid business id" });
+      return res.status(400).json({
+        message: "Invalid business id",
+      });
     }
+
+    // Validate rating
     if (!rating || rating < 1 || rating > 5) {
-      return res
-        .status(400)
-        .json({ message: "Rating must be between 1 and 5" });
+      return res.status(400).json({
+        message: "Rating must be between 1 and 5",
+      });
     }
+
+    // Validate comment
     if (!comment) {
-      return res.status(400).json({ message: "Comment is required" });
+      return res.status(400).json({
+        message: "Comment is required",
+      });
     }
 
-    const business = await Business.findOne({
-      _id: businessId,
-      verified_status: "verified",
-      is_active: true,
-    });
+    // Check if business exists
+    const business = await Business.findById(businessId);
+
     if (!business) {
-      return res.status(404).json({ message: "Business not found" });
+      return res.status(404).json({
+        message: "Business not found",
+      });
     }
 
+    // Check if business is active
+    if (!business.is_active) {
+      return res.status(400).json({
+        message: "Business is inactive",
+      });
+    }
+
+    // Optional: Allow reviews only for verified businesses
+    if (business.verified_status !== "verified") {
+      return res.status(400).json({
+        message: "Only verified businesses can receive reviews",
+      });
+    }
+
+    // Create review
     const review = await Review.create({
       business_id: businessId,
       user_id: req.dbUser._id,
       rating,
       comment,
-      images: images || [],
+      review_images,
     });
 
+    // Add review to business
     await Business.findByIdAndUpdate(businessId, {
       $addToSet: { reviews: review._id },
     });
+
+    // Refresh average rating
     await refreshBusinessRating(businessId);
 
-    return res
-      .status(201)
-      .json({ message: "Review added successfully", review });
+    return res.status(201).json({
+      message: "Review added successfully",
+      review,
+    });
+
   } catch (error) {
+    console.error("[addReview]", error);
+
     if (error.code === 11000) {
-      return res
-        .status(409)
-        .json({ message: "You have already reviewed this business" });
+      return res.status(409).json({
+        message: "You have already reviewed this business",
+      });
     }
-    return res.status(500).json({ message: "Internal server error" });
+
+    return res.status(500).json({
+      message: `Internal server error: ${error.message}`,
+    });
   }
 };
 
 const editReview = async (req, res) => {
   try {
     const reviewId = req.body.reviewId;
-    const { rating, comment, images } = req.body;
+    const { rating, comment } = req.body;
+
+    // Handle uploaded new review images
+    const newReviewImages = req.files
+      ? req.files.map((file) =>
+          path
+            .join("uploads", "review-images", file.filename)
+            .replace(/\\/g, "/")
+        )
+      : [];
 
     if (!reviewId || !isValidId(reviewId)) {
       return res.status(400).json({ message: "Invalid reviewId" });
     }
+
     if (rating && (rating < 1 || rating > 5)) {
-      return res
-        .status(400)
-        .json({ message: "Rating must be between 1 and 5" });
+      return res.status(400).json({
+        message: "Rating must be between 1 and 5",
+      });
     }
 
     const review = await Review.findOne({
       _id: reviewId,
       user_id: req.dbUser._id,
     });
+
     if (!review) {
       return res.status(404).json({ message: "Review not found" });
     }
 
     if (rating !== undefined) review.rating = rating;
     if (comment !== undefined) review.comment = comment;
-    if (images !== undefined) review.images = images;
+
+    // Append new images
+    if (newReviewImages.length) {
+      review.review_images = [
+        ...review.review_images,
+        ...newReviewImages,
+      ];
+    }
+
     await review.save();
     await refreshBusinessRating(review.business_id);
 
-    return res
-      .status(200)
-      .json({ message: "Review updated successfully", review });
+    return res.status(200).json({
+      message: "Review updated successfully",
+      review,
+    });
+
   } catch (error) {
-    return res.status(500).json({ message: "Internal server error" });
+    console.error("[editReview]", error);
+
+    return res.status(500).json({
+      message: `Internal server error: ${error.message}`,
+    });
   }
 };
 
