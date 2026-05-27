@@ -593,7 +593,7 @@ const updateBusinessImages = async (req, res) => {
     // Update logo (replace old logo)
     if (req.files?.logo?.[0]) {
       business.logo = path
-        .join("uploads", "business-logos", req.files.logo[0].filename)
+        .join("uploads", "logo-images", req.files.logo[0].filename)
         .replace(/\\/g, "/");
     }
 

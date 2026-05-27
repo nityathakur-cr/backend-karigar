@@ -59,13 +59,13 @@ router.post(
   isBusinessOwner,
   updateBusinessTiming,
 );
-router.post(
-  "/images",
-  verifyToken,
-  checkUser,
-  isBusinessOwner,
-  updateBusinessImages,
-);
+// router.post(
+//   "/images",
+//   verifyToken,
+//   checkUser,
+//   isBusinessOwner,
+  // updateBusinessImages,
+// );
 router.post("/delete", verifyToken, checkUser, isBusinessOwner, deleteBusiness);
 
 // User routes

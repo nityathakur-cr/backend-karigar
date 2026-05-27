@@ -19,20 +19,8 @@ router.post(
   isVerifier,
   getVerificationBusinesses,
 );
-router.post(
-  "/approve",
-  verifyToken,
-  checkUser,
-  isVerifier,
-  approveBusiness,
-);
-router.post(
-  "/reject",
-  verifyToken,
-  checkUser,
-  isVerifier,
-  rejectBusiness,
-);
+router.post("/approve", verifyToken, checkUser, isVerifier, approveBusiness);
+router.post("/reject", verifyToken, checkUser, isVerifier, rejectBusiness);
 router.post(
   "/history",
   verifyToken,

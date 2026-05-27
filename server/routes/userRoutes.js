@@ -48,17 +48,6 @@ const {
 } = require("../api/notification/notificationController");
 const { createReport } = require("../api/reports/reportController");
 
-// Auth routes
-router.post("/auth/login", verifyToken, loginUser);
-router.post("/auth/me", verifyToken, checkUser, getMe);
-router.post(
-  "/auth/profile",
-  verifyToken,
-  checkUser,
-  upload.single("profile_image"),
-  updateProfile,
-);
-router.post("/auth/fcm-token", verifyToken, checkUser, updateFcmToken);
 
 // Public: Business routes
 router.post("/business/home", getHomeSections);
@@ -78,6 +67,7 @@ router.post("/banners/list", getActiveBanners);
 
 // Public: Reviews routes
 router.post("/reviews/business/list", getBusinessReviews);
+
 
 // Authenticated: Reviews routes
 router.post(

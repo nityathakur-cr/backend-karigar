@@ -6,6 +6,7 @@ const {
   checkUser,
   isAdmin,
   isVerifier,
+  optionalCheckUser,
 } = require("../middleware/auth.middleware");
 
 const {
@@ -15,7 +16,12 @@ const {
   searchAdmin,
 } = require("../api/auth/auth.controller");
 
-const { suspendBusiness } = require("../api/business/businessController");
+const {
+  suspendBusiness,
+  getApprovedBusinesses,
+  getBusinessDetails,
+  trackBusinessAction,
+} = require("../api/business/businessController");
 const {
   getVerificationBusinesses,
   approveBusiness,
@@ -27,18 +33,31 @@ const {
   updateCategory,
   createSubCategory,
   updateSubCategory,
+  getCategories,
+  getSubCategories,
 } = require("../api/category/categoryController");
-const { createCity, updateCity } = require("../api/cities/citiesController");
+const {
+  createCity,
+  updateCity,
+  getActiveCities,
+  getAllCities,
+  getCityById,
+  deleteCity,
+} = require("../api/cities/citiesController");
 const {
   createBanner,
   updateBanner,
+  getActiveBanners,
 } = require("../api/banner/bannerController");
 const {
   getAllReports,
   updateReportStatus,
   getBusinessReports,
+  approveReport,
+  rejectReport,
+  getReportById,
 } = require("../api/reports/reportController");
-const { updateReviewStatus } = require("../api/review/reviewController");
+const { updateReviewStatus, getBusinessReviews } = require("../api/review/reviewController");
 const {
   getAdminDashboard,
   getAdminActivityLog,
@@ -46,12 +65,13 @@ const {
 const {
   createNotification,
 } = require("../api/notification/notificationController");
+const { getRecentViews, addRecentView } = require("../api/recentView/recentController");
 
 // User routes
-router.post("/users/list", verifyToken, checkUser, isAdmin, getAllUsers);
-router.post("/users/search", verifyToken, checkUser, isAdmin, searchAdmin);
-router.post("/users/block", verifyToken, checkUser, isAdmin, blockUser);
-router.post("/users/role", verifyToken, checkUser, isAdmin, changeUserRole);
+// router.post("/users/list", verifyToken, checkUser, isAdmin, getAllUsers);
+// router.post("/users/search", verifyToken, checkUser, isAdmin, searchAdmin);
+// router.post("/users/block", verifyToken, checkUser, isAdmin, blockUser);
+// router.post("/users/role", verifyToken, checkUser, isAdmin, changeUserRole);
 
 // Business routes
 router.post(
@@ -61,6 +81,9 @@ router.post(
   isAdmin,
   suspendBusiness,
 );
+router.post("/list", getApprovedBusinesses);
+router.post("/details", optionalCheckUser, getBusinessDetails);
+router.post("/track", trackBusinessAction);
 
 // Verification routes
 router.post(
@@ -93,6 +116,9 @@ router.post(
 );
 
 // Categories routes
+router.post("/categories/list", getCategories);
+router.post("/categories/sub-categories/list", getSubCategories);
+
 router.post(
   "/categories/create",
   verifyToken,
@@ -127,10 +153,15 @@ router.post(
 );
 
 // Cities routes
+router.post("/cities/list", getActiveCities);
 router.post("/cities/create", verifyToken, checkUser, isAdmin, createCity);
 router.post("/cities/update", verifyToken, checkUser, isAdmin, updateCity);
+router.post("/cities/getall", verifyToken, checkUser, isAdmin, getAllCities);
+router.post("/cities/getsingle", verifyToken, checkUser, isAdmin, getCityById);
+router.post("/cities/delete", verifyToken, checkUser, isAdmin, deleteCity);
 
 // Banners routes
+router.post("/list", getActiveBanners);
 router.post(
   "/banners/create",
   verifyToken,
@@ -157,6 +188,9 @@ router.post(
   isAdmin,
   getBusinessReports,
 );
+router.post("/reports/approve", verifyToken, checkUser, isAdmin, approveReport);
+router.post("/reports/reject", verifyToken, checkUser, isAdmin, rejectReport);
+router.post("/reports/getsingle", verifyToken, checkUser, isAdmin, getReportById);
 
 // Reviews routes
 router.post(
@@ -166,6 +200,7 @@ router.post(
   isAdmin,
   updateReviewStatus,
 );
+router.post("/reviews/business/list", getBusinessReviews);
 
 // Analytics routes
 router.post(
@@ -191,5 +226,11 @@ router.post(
   isAdmin,
   createNotification,
 );
+
+// Recent routes
+router.post("/recent/list", verifyToken, checkUser, getRecentViews);
+router.post("/recents/add", verifyToken, checkUser, addRecentView);
+
+
 
 module.exports = router;
